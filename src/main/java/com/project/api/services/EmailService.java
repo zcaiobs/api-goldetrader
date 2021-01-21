@@ -13,11 +13,16 @@ public class EmailService {
 
     public String sendSimpleMessage(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("zcaiobernardodasilva@gmail.com");
+        message.setFrom("no-reply@goldetrader.com.br");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
         mail.send(message);
         return "Email forwarded";
+    }
+
+    public String teste() {
+    
+        return "ok";
     }
 }

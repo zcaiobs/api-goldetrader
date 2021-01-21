@@ -34,6 +34,14 @@ public class UserService {
         }
     }
 
+    public boolean exist(String email) {
+        if (ur.existsByEmail(email)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public Optional<User> findOne(String email) {
         return ur.findByEmail(email);
     }

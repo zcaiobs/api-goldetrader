@@ -16,7 +16,7 @@ public class TokenAuthenticationService {
 
 	private Algorithm algorithm = Algorithm.HMAC256("MySecret");
 
-	public String addAuthentication(String email) {
+	public String addAuthentication(String email, long timeExpires) {
 		try {
 			
 			String token = JWT.create()
@@ -24,7 +24,7 @@ public class TokenAuthenticationService {
 								.withKeyId(email)
 								.withIssuedAt(new Date())
 								.withExpiresAt( Date.from(
-									LocalDateTime.now().plusMinutes(15L)
+									LocalDateTime.now().plusMinutes(timeExpires)
 										.atZone(ZoneId.systemDefault())
 										.toInstant()))
 								.sign(algorithm);

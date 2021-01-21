@@ -35,12 +35,43 @@ public class UserController {
     @Autowired
     EmailService mail;
 
-    @GetMapping("/mail")
-    public String sendMail() {
-        String to = "caiobernardodasilva@gmail.com";
-        String subject = "Teste API JAVA";
-        String msg = "Hello World!";
-        return mail.sendSimpleMessage(to, subject, msg);
+    @PutMapping("/newpwd")
+    public String teste(@RequestBody User u, @RequestHeader HttpHeaders headers) {
+
+        if (!headers.getOrEmpty("key").isEmpty()) {
+            String key = headers.getOrEmpty("key").get(0);
+            String email = token.verifyAuthentication(key);
+
+            if (us.exist(email)) {
+                Optional<User> isUser = us.findOne(email);
+                isUser.get().setPassword(u.getPassword());
+                User user = isUser.get();
+                us.save(user);
+                System.out.println("Your password has been changed successfully"); 
+                return "Your password has been changed successfully";
+            } else {
+                return "Error: The Token has expired";
+            }
+        } else {
+            return "Error: User not found";
+        }
+    }
+
+    @PostMapping("/forgot")
+    public String sendMail(@RequestBody User u) {
+
+        System.out.println(u.getEmail());
+        if (us.exist(u.getEmail())) {
+
+            String to = u.getEmail();
+            String subject = "Reset de senha";
+            String msg = "Click here for change your password: http://localhost:3000/newpwd?key=" + token.addAuthentication(u.getEmail(), 20L);
+            return mail.sendSimpleMessage(to, subject, msg);
+
+        } else {
+            return "Email not found.";
+        }
+
     }
 
     @PostMapping("/auth")
@@ -48,7 +79,7 @@ public class UserController {
         HttpHeaders responseHeaders = new HttpHeaders();
 
         if (us.auth(acess)) {
-            responseHeaders.add("token", token.addAuthentication(acess.getEmail()));
+            responseHeaders.add("token", token.addAuthentication(acess.getEmail(), 30L));
             return new ResponseEntity<>("Content", responseHeaders, HttpStatus.OK);
         } else {
             responseHeaders.add("token", null);
