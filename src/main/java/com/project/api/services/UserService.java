@@ -3,6 +3,7 @@ package com.project.api.services;
 import java.util.List;
 import java.util.Optional;
 
+import com.project.api.models.Bet;
 import com.project.api.models.User;
 import com.project.api.repositories.UserRepository;
 import com.project.api.security.MySecurityConfig;
@@ -17,20 +18,38 @@ public class UserService {
     UserRepository ur;
 
     @Autowired
-    MySecurityConfig sc;
+    MySecurityConfig sc;  
 
-    public boolean auth(User acess) {
+    public User newBet(Bet bet, String email) {
+        User user = ur.findByEmail(email).get();
+        user.getTrader().add(bet);
+        ur.save(user);
+        return user;
+    }
+
+    public User removeBet(String id, String email) {
+        User user = ur.findByEmail(email).get();
+        user.getTrader().removeIf( result -> result.getId().equals(id));
+        ur.save(user);
+        return user;
+    }
+
+    public String auth(User acess) {
         try {
             Optional<User> user = ur.findByEmail(acess.getEmail());
             if (user.isPresent()) {
                 User u = (User) user.get();
-                return sc.passwordEncoder().matches(acess.getPassword(), u.getPassword());
+                if (sc.passwordEncoder().matches(acess.getPassword(), u.getPassword())) {
+                    return u.getVerification().equals("Yes") ? "valid" : "verify";
+                } else {
+                    return "false";
+                }
             } else {
-                return false;
+                return "false";
             }
         } catch (Exception e) {
-            System.out.println("Deu ruim " + e);
-            return false;
+            System.out.println("Error: " + e);
+            return "false";
         }
     }
 
@@ -56,15 +75,20 @@ public class UserService {
             ur.save(u);
             return true;
         } catch (Exception e) {
-            System.out.println("Deu ruim " + e);
+            System.out.println("Error: " + e);
             return false;
         }
 
     }
 
-    public String update(User u) {
-        ur.save(u);
-        return "User updated";
+    public boolean update(User u) {
+        try {
+            ur.save(u);
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+            return false;
+        }
     }
 
     public String deleteOne(String id) {

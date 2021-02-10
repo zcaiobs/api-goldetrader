@@ -41,7 +41,7 @@ public class TokenAuthenticationService {
 											.withIssuer("Auth0")
 											.build();
 
-			DecodedJWT jwt = jwtVerifier.verify(token);
+			DecodedJWT jwt = jwtVerifier.verify(token); 
 			return jwt.getKeyId();
 		} catch(Exception e) {
 			System.out.println("Deu ruim! " + e);

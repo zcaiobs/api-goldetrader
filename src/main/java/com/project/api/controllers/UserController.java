@@ -2,6 +2,8 @@ package com.project.api.controllers;
 
 import java.util.List;
 import java.util.Optional;
+
+import com.project.api.models.Bet;
 import com.project.api.models.User;
 import com.project.api.services.EmailService;
 import com.project.api.services.TokenAuthenticationService;
@@ -35,8 +37,28 @@ public class UserController {
     @Autowired
     EmailService mail;
 
+    @PostMapping("/newbet")
+    public User newBet(@RequestBody Bet bet, @RequestHeader HttpHeaders headers) {
+        if(!headers.isEmpty()){
+            String key = headers.getOrEmpty("key").get(0);
+            String email = token.verifyAuthentication(key);
+            return us.newBet(bet, email);
+        }
+        return null;
+    }
+
+    @PostMapping("/removebet")
+    public User removeBet(@RequestBody Bet bet, @RequestHeader HttpHeaders headers) {
+        if(!headers.isEmpty()){
+            String key = headers.getOrEmpty("key").get(0);
+            String email = token.verifyAuthentication(key);
+            return us.removeBet(bet.getId(), email);
+        }
+        return null;
+    }
+
     @PutMapping("/newpwd")
-    public String teste(@RequestBody User u, @RequestHeader HttpHeaders headers) {
+    public String newpwd(@RequestBody User u, @RequestHeader HttpHeaders headers) {
 
         if (!headers.getOrEmpty("key").isEmpty()) {
             String key = headers.getOrEmpty("key").get(0);
@@ -47,7 +69,7 @@ public class UserController {
                 isUser.get().setPassword(u.getPassword());
                 User user = isUser.get();
                 us.save(user);
-                System.out.println("Your password has been changed successfully"); 
+                System.out.println("Your password has been changed successfully");
                 return "Your password has been changed successfully";
             } else {
                 return "Error: The Token has expired";
@@ -65,7 +87,8 @@ public class UserController {
 
             String to = u.getEmail();
             String subject = "Reset de senha";
-            String msg = "Click here for change your password: http://localhost:3000/newpwd?key=" + token.addAuthentication(u.getEmail(), 20L);
+            String msg = "Click here to change your password: http://localhost:3000/newpwd?key="
+                    + token.addAuthentication(u.getEmail(), 20L);
             return mail.sendSimpleMessage(to, subject, msg);
 
         } else {
@@ -78,9 +101,13 @@ public class UserController {
     public ResponseEntity<String> auth(@RequestBody User acess) {
         HttpHeaders responseHeaders = new HttpHeaders();
 
-        if (us.auth(acess)) {
-            responseHeaders.add("token", token.addAuthentication(acess.getEmail(), 30L));
+        if (us.auth(acess) == "valid") {
+            responseHeaders.add("token", token.addAuthentication(acess.getEmail(), 60L));
             return new ResponseEntity<>("Content", responseHeaders, HttpStatus.OK);
+        }
+        if (us.auth(acess) == "verify") {
+            responseHeaders.add("token", token.addAuthentication(acess.getEmail(), 60L));
+            return new ResponseEntity<>("Content", responseHeaders, HttpStatus.ACCEPTED);
         } else {
             responseHeaders.add("token", null);
             return new ResponseEntity<>(null, responseHeaders, HttpStatus.UNAUTHORIZED);
@@ -95,8 +122,13 @@ public class UserController {
             String isToken = headers.getOrEmpty("token").get(0);
             String isUser = token.verifyAuthentication(isToken);
             if (!isUser.isEmpty() && isUser != "Error") {
-                responseHeaders.set("token", isToken);
-                return new ResponseEntity<>(us.findOne(isUser), responseHeaders, HttpStatus.OK);
+                if (us.findOne(isUser).get().getVerification() == "No") {
+                    responseHeaders.set("token", isToken);
+                    return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+                } else {
+                    responseHeaders.set("token", isToken);
+                    return new ResponseEntity<>(us.findOne(isUser), responseHeaders, HttpStatus.OK);
+                }
             } else {
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.UNAUTHORIZED);
             }
@@ -115,10 +147,31 @@ public class UserController {
         return us.findAll();
     }
 
+    @PostMapping("/verification")
+    public String verify(@RequestHeader HttpHeaders headers) {
+        if (!headers.getOrEmpty("key").isEmpty()) {
+            String key = headers.getOrEmpty("key").get(0);
+            String email = token.verifyAuthentication(key);
+            String to = email;
+            String subject = "Verificação de Email";
+            String msg = "Click here to verify your account: http://localhost:3000/verify?key="
+                    + token.addAuthentication(email, 20L);
+            mail.sendSimpleMessage(to, subject, msg);
+            return "A verification link has been sent to your email account";
+        } else {
+            return "Error";
+        }
+    }
+
     @PostMapping
     public ResponseEntity<String> register(@RequestBody User u) {
         HttpHeaders responHeaders = new HttpHeaders();
         if (us.save(u)) {
+            String to = u.getEmail();
+            String subject = "Verificação de Email";
+            String msg = "Click here to verify your account: http://localhost:3000/verify?key="
+                    + token.addAuthentication(u.getEmail(), 20L);
+            mail.sendSimpleMessage(to, subject, msg);
             return new ResponseEntity<>("User registered.", responHeaders, HttpStatus.OK);
         } else {
             return new ResponseEntity<>("User already exist.", responHeaders, HttpStatus.CONFLICT);
@@ -126,9 +179,19 @@ public class UserController {
     }
 
     @PutMapping
-    public String update(@RequestBody User u) {
-        if (us.save(u)) {
-            return "Ok";
+    public String verify(@RequestBody User u, @RequestHeader HttpHeaders headers) {
+        if (!headers.getOrEmpty("key").isEmpty()) {
+            System.out.println(headers.getOrEmpty("key").get(0));
+            String isEmail = token.verifyAuthentication(headers.getOrEmpty("key").get(0));
+            System.out.println(isEmail);
+            Optional<User> isUser = us.findOne(isEmail);
+            if (isUser.isPresent()) {
+                isUser.get().setVerification(u.getVerification());
+                User user = isUser.get();
+                return us.update(user) ? "Account verified" : "Verification recused";
+            } else {
+                return "Verification recused";
+            }
         } else {
             return "Request recused";
         }

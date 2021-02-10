@@ -1,6 +1,8 @@
 package com.project.api.models;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -25,6 +27,10 @@ public class User {
 
     private String password;
 
-    private Date date = new Date(); 
+    private Date date = new Date();
+    
+    private String verification = "No";
+
+    private List<Bet> trader = new ArrayList<Bet>();
     
 }
