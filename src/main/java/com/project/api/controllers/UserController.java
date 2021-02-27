@@ -40,14 +40,14 @@ public class UserController {
     @PostMapping("/newbet")
     public User newBet(@RequestBody Bet bet, @RequestHeader HttpHeaders headers) {
         if(!headers.isEmpty()){
-            String key = headers.getOrEmpty("key").get(0);
-            String email = token.verifyAuthentication(key);
+            String key = headers.getOrEmpty("key").get(0); 
+            String email = token.verifyAuthentication(key);   
             return us.newBet(bet, email);
         }
         return null;
     }
 
-    @PostMapping("/removebet")
+    @DeleteMapping("/removebet")
     public User removeBet(@RequestBody Bet bet, @RequestHeader HttpHeaders headers) {
         if(!headers.isEmpty()){
             String key = headers.getOrEmpty("key").get(0);

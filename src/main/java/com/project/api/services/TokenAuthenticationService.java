@@ -30,8 +30,8 @@ public class TokenAuthenticationService {
 								.sign(algorithm);
 			return token;
 		} catch (Exception e) {
-			System.out.println("Deu ruim! " + e);
-			return "Deu ruim! "+ e;
+			System.out.println("Error! " + e);
+			return "Error! "+ e;
 		}
 	}
 
@@ -44,7 +44,7 @@ public class TokenAuthenticationService {
 			DecodedJWT jwt = jwtVerifier.verify(token); 
 			return jwt.getKeyId();
 		} catch(Exception e) {
-			System.out.println("Deu ruim! " + e);
+			System.out.println("Error! " + e);
 			return "Error";
 		}
 

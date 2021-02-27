@@ -18,7 +18,7 @@ public class UserService {
     UserRepository ur;
 
     @Autowired
-    MySecurityConfig sc;  
+    MySecurityConfig sc;
 
     public User newBet(Bet bet, String email) {
         User user = ur.findByEmail(email).get();
@@ -29,7 +29,7 @@ public class UserService {
 
     public User removeBet(String id, String email) {
         User user = ur.findByEmail(email).get();
-        user.getTrader().removeIf( result -> result.getId().equals(id));
+        user.getTrader().removeIf(result -> result.getId().equals(id));
         ur.save(user);
         return user;
     }
@@ -40,7 +40,7 @@ public class UserService {
             if (user.isPresent()) {
                 User u = (User) user.get();
                 if (sc.passwordEncoder().matches(acess.getPassword(), u.getPassword())) {
-                    return u.getVerification().equals("Yes") ? "valid" : "verify";
+                    return u.getVerification().equals("Yes") ? "valid" : "verify"; 
                 } else {
                     return "false";
                 }
